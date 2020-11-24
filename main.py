@@ -1,7 +1,33 @@
-from tkinter import *
+import assets.player as player
+import assets.prop as prop
 
-# instantiates tkinter window/root widget
-root = Tk()
+# ------------------------------------APPLICATION STATE----------------------------------
+game_players = []
+board_properties = [] #list of all houses to be on the board
 
-# enter the main loop
-root.mainloop()
+
+# ----------------------------------------GAME LOOP---------------------------------------
+# asks for number of players
+num_players = input('Welcome to Python Monopoly! How many players do we have today? ')
+while not num_players.isdigit():
+    print('Please enter a number')
+    num_players = input('Welcome to Python Monopoly! How many players do we have today? ')
+num_players = int(num_players)
+
+# instantiates that number of players and adds to game
+for player_no in range(1, num_players+1):
+    game_players.append(player.Player(player_no))
+
+# asks that user for their token/initials for board display, and updates the state
+for user in game_players:
+    user_token = input(f'Dear Player {user.player_no}, please enter your initials which will be displayed on the board. ')
+    while not user_token: #runs if user_token is an empty string, a falsey value
+        print('Please enter something')
+        user_token = input(f'Dear Player {user.player_no}, please enter your initials which will be displayed on the board. ')
+    user.set_token(user_token)
+
+
+
+# ------------------------------------------------TESTING---------------------------------------------------
+for user in game_players:
+    print(user)
