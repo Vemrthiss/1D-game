@@ -1,9 +1,11 @@
-import assets.player as player
-import assets.prop as prop
+import assets.Player as player
+import assets.Property as prop
+import assets.Board as board
 
-# ------------------------------------APPLICATION STATE----------------------------------
+# ----------------------------------APPLICATION STATE TO INITIALISE----------------------------------
 game_players = []
-board_properties = [] #list of all houses to be on the board
+game_properties = [] #list of all 22 houses to be on the board
+game_board = 
 
 
 # ----------------------------------------GAME LOOP---------------------------------------
