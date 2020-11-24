@@ -1,7 +1,7 @@
 import BoardTile
 
 num_tiles = 40 #total number of tiles
-board_layout = { #defines how many of each tile type there should be in the board
+board_layout = { #defines how many of each tile type there should be in the board, TO BE REMOVED????
     'start': 1, #start/parking are corner pairs
     'parking': 1,
     'jail': 1, #jail tile is also 'just visiting' if he/she is not in jail
@@ -43,6 +43,21 @@ board[12] = BoardTile.BoardTile('utility_bills')
 board[28] = BoardTile.BoardTile('utility_bills')
 
 #--------TESTING----------------
-print(board[5] is board[35])
-for tile in board:
-    print(tile)
+def display_board(board):
+    first_row = ''
+    for tile in board[:11]:
+        first_row += f'{str(tile)} '
+    print(first_row)
+    
+    right_column = board[11:20]
+    left_column = board[31:][::-1]
+
+    for left_tile, right_tile in zip(left_column, right_column):
+        print(str(left_tile) + ' '*9 + str(right_tile))
+
+    last_row = ''
+    for tile in board[20:31][::-1]:
+        last_row += f'{str(tile)} '
+    print(last_row)
+
+display_board(board)

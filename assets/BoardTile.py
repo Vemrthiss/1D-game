@@ -4,7 +4,8 @@ class BoardTile():
         self.occupant = 0 # there is no 0th player, for instantiation purposes
 
     def __str__(self): #for testing
-        return f'This is a tile of type {self.type}'
+        #return f'This is a tile of type {self.type}'
+        return f'{self.type}'
     
     def update_occupant(self, player_no):
         self.occupant = player_no

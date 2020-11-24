@@ -1,11 +1,12 @@
 import assets.Player as player
 import assets.Property as prop
 import assets.Board as board
+import assets.BoardTile as boardTile
 
 # ----------------------------------APPLICATION STATE TO INITIALISE----------------------------------
 game_players = []
 game_properties = [] #list of all 22 houses to be on the board
-game_board = 
+#game_board = 
 
 
 # ----------------------------------------GAME LOOP---------------------------------------
