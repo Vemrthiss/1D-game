@@ -1,7 +1,7 @@
 import assets.Player as player
 import assets.Property as prop
-import assets.Board as board
-import assets.BoardTile as boardTile
+import assets.board.Board as board
+import assets.board.BoardTile as boardTile
 
 # ----------------------------------APPLICATION STATE TO INITIALISE----------------------------------
 game_players = []

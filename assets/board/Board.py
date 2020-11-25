@@ -1,18 +1,9 @@
 import BoardTile
+import BoardInfo
 
-num_tiles = 40 #total number of tiles
-board_layout = { #defines how many of each tile type there should be in the board, TO BE REMOVED????
-    'start': 1, #start/parking are corner pairs
-    'parking': 1,
-    'jail': 1, #jail tile is also 'just visiting' if he/she is not in jail
-    'go_jail': 1, #jail/go_jail are corner pairs
-    'chance': 3,
-    'community_chest': 3,
-    'small_tax': 1,
-    'large_tax': 1,
-    'train_station': 4, #one on each side
-    'utility_bills': 2 #e.g. water, electricity
-}
+num_tiles = BoardInfo.num_tiles #total number of tiles
+board_layout = BoardInfo.board_layout
+max_tile_length = BoardInfo.max_tile_length
 
 board = ['x' for num in range(num_tiles)]
 corner_difference = int(num_tiles/2)
@@ -53,7 +44,7 @@ def display_board(board):
     left_column = board[31:][::-1]
 
     for left_tile, right_tile in zip(left_column, right_column):
-        print(str(left_tile) + ' '*9 + str(right_tile))
+        print(str(left_tile) + (' '*9*max_tile_length) + str(right_tile))
 
     last_row = ''
     for tile in board[20:31][::-1]:
