@@ -2,10 +2,9 @@ import BoardTile
 import BoardInfo
 
 num_tiles = BoardInfo.num_tiles #total number of tiles
-board_layout = BoardInfo.board_layout
 max_tile_length = BoardInfo.max_tile_length
 
-board = ['x' for num in range(num_tiles)]
+board = [f"{'x': <{max_tile_length}}" for num in range(num_tiles)]
 corner_difference = int(num_tiles/2)
 
 #setting ALL tile positions
@@ -37,18 +36,19 @@ board[28] = BoardTile.BoardTile('utility_bills')
 def display_board(board):
     first_row = ''
     for tile in board[:11]:
-        first_row += f'{str(tile)} '
+        first_row += f'{str(tile)}'
     print(first_row)
     
     right_column = board[11:20]
     left_column = board[31:][::-1]
 
     for left_tile, right_tile in zip(left_column, right_column):
-        print(str(left_tile) + (' '*9*max_tile_length) + str(right_tile))
+        row = str(left_tile) + (' '*max_tile_length*9) + str(right_tile)
+        print(row)
 
     last_row = ''
     for tile in board[20:31][::-1]:
-        last_row += f'{str(tile)} '
+        last_row += f'{str(tile)}'
     print(last_row)
 
 display_board(board)

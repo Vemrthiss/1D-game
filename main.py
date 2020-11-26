@@ -10,6 +10,8 @@ game_properties = [] #list of all 22 houses to be on the board
 
 
 # ----------------------------------------GAME LOOP---------------------------------------
+# welcome message
+print('For the best experience, please maximise your terminal :)')
 # asks for number of players
 num_players = input('Welcome to Python Monopoly! How many players do we have today? ')
 while not num_players.isdigit():

@@ -1,6 +1,6 @@
 num_tiles = 40
 
-board_layout = { #defines how many of each tile type there should be in the board, TO BE REMOVED????
+board_assets = { #defines how many of each tile type there should be in the board, TO BE REMOVED????
     'start': 1, #start/parking are corner pairs
     'parking': 1,
     'jail': 1, #jail tile is also 'just visiting' if he/she is not in jail
@@ -15,7 +15,7 @@ board_layout = { #defines how many of each tile type there should be in the boar
 
 def get_max_tile_length():
     max_length = 0
-    for key in board_layout: #references 'board_layout' variable of this file
+    for key in board_assets: #references 'board_layout' variable of this file
         if len(key) > max_length:
             max_length = len(key)
     return max_length
