@@ -1,38 +1,41 @@
-import BoardTile
-import BoardInfo
+from assets.tiles import *
+import assets.board.BoardInfo as BoardInfo
 
 num_tiles = BoardInfo.num_tiles #total number of tiles
 max_tile_length = BoardInfo.max_tile_length
-
-board = [f"{'x': <{max_tile_length}}" for num in range(num_tiles)]
 corner_difference = int(num_tiles/2)
 
-#setting ALL tile positions
-board[0] = BoardTile.BoardTile('start')
-board[corner_difference] = BoardTile.BoardTile('parking')
-board[10] = BoardTile.BoardTile('jail')
-board[10+corner_difference] = BoardTile.BoardTile('go_jail')
+def init_board():
+    fresh_board = [f"{'x': <{max_tile_length}}" for num in range(num_tiles)]
 
-#cannot assign multiple variables to the same value at once (else all point to same object)
-board[7] = BoardTile.BoardTile('chance')
-board[22] = BoardTile.BoardTile('chance')
-board[36] = BoardTile.BoardTile('chance')
-board[2] = BoardTile.BoardTile('community_chest')
-board[17] = BoardTile.BoardTile('community_chest')
-board[33] = BoardTile.BoardTile('community_chest')
+    #setting ALL tile positions
+    fresh_board[0] = CornerTiles.Start()
+    fresh_board[corner_difference] = CornerTiles.Parking()
+    fresh_board[10] = CornerTiles.Jail()
+    fresh_board[10+corner_difference] = CornerTiles.GoJail()
 
-board[4] = BoardTile.BoardTile('small_tax')
-board[38] = BoardTile.BoardTile('large_tax')
+    #cannot assign multiple variables to the same value at once (else all point to same object)
+    fresh_board[7] = Chance.Chance()
+    fresh_board[22] = Chance.Chance()
+    fresh_board[36] = Chance.Chance()
+    fresh_board[2] = Chest.Chest()
+    fresh_board[17] = Chest.Chest()
+    fresh_board[33] = Chest.Chest()
 
-board[5] = BoardTile.BoardTile('train_station')
-board[15] = BoardTile.BoardTile('train_station')
-board[25] = BoardTile.BoardTile('train_station')
-board[35] = BoardTile.BoardTile('train_station')
+    fresh_board[4] = Tax.Tax('small')
+    fresh_board[38] = Tax.Tax('large')
 
-board[12] = BoardTile.BoardTile('utility_bills')
-board[28] = BoardTile.BoardTile('utility_bills')
+    fresh_board[5] = Station.Station('Jurong West')
+    fresh_board[15] = Station.Station('Ang Mo Kio')
+    fresh_board[25] = Station.Station('Bedok')
+    fresh_board[35] = Station.Station('Harbourfront')
 
-#--------TESTING----------------
+    fresh_board[12] = Utility.Utility('Water Bills')
+    fresh_board[28] = Utility.Utility('Electricity Bills')
+
+    return fresh_board
+
+
 def display_board(board):
     first_row = ''
     for tile in board[:11]:
@@ -50,5 +53,3 @@ def display_board(board):
     for tile in board[20:31][::-1]:
         last_row += f'{str(tile)}'
     print(last_row)
-
-display_board(board)
