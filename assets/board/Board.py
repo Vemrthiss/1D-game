@@ -5,6 +5,7 @@ num_tiles = BoardInfo.num_tiles #total number of tiles
 max_tile_length = BoardInfo.max_tile_length
 corner_difference = int(num_tiles/2)
 
+#initialises an empty, new board
 def init_board():
     fresh_board = [f"{'x': <{max_tile_length}}" for num in range(num_tiles)]
 
@@ -35,12 +36,12 @@ def init_board():
 
     return fresh_board
 
-
+# receives a board list (from app state) and displays it
 def display_board(board):
     first_row = ''
     for tile in board[:11]:
         first_row += f'{str(tile)}'
-    print(first_row)
+    print(f'\n{first_row}')
     
     right_column = board[11:20]
     left_column = board[31:][::-1]
@@ -52,4 +53,9 @@ def display_board(board):
     last_row = ''
     for tile in board[20:31][::-1]:
         last_row += f'{str(tile)}'
-    print(last_row)
+    print(f'{last_row}\n')
+
+def update_board(old_tile, new_tile, player_obj): #should this method even exist?
+    #the tile arguments are children of the BoardTile class
+    old_tile.update_occupants(player_obj, 'leaving')
+    new_tile.update_occupants(player_obj, 'entering')
