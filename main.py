@@ -1,12 +1,18 @@
 import assets.Player as player
-import assets.Property as prop
 import assets.board.Board as board
-#import assets.board.BoardTile as boardTile
 
 # ----------------------------------APPLICATION STATE TO INITIALISE----------------------------------
 game_players = []
 game_properties = [] #list of all 22 houses to be on the board
 game_board = board.init_board() # initalises a persisting BOARD STATE, to be taken reference whenever the board is to be printed
+
+#rewriting imported functions as they always take the same arguments
+def update_board():
+    board.update_board(game_board, game_players)
+
+def display_board():
+    board.display_board(game_board)
+
 
 
 # ----------------------------------------GAME LOOP---------------------------------------
@@ -32,12 +38,26 @@ for user in game_players:
     user.set_token(user_token)
 
 # prints inital board
-board.display_board(game_board)
+display_board()
 
 #for testing: assigning player object(s) a position through hard coding
 test_user = game_players[0]
 test_user.update_position(2) #gives the player object a new position at pos 2
 print(game_players[0]) #verifies that the above action updates the app state of game players
+update_board()
+display_board()
+print(game_board[2].occupants)
+test_user2 = game_players[1]
+test_user2.update_position(4)
+print(game_players[1])
+update_board()
+display_board()
+print(game_board[4].occupants)
+test_user.update_position(4)
+print(game_players[0])
+update_board()
+display_board()
+print(game_board[4].occupants)
 
 # ------------------------------------------------TESTING---------------------------------------------------
 # for user in game_players:

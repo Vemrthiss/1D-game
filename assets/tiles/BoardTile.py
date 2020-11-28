@@ -15,8 +15,8 @@ class BoardTile():
     
         return f'{str_repr: <{self.max_tile_length}}'
     
-    def update_occupants(self, player_obj, action):
-        if action == 'entering':
-            self.occupants.append(player_obj)
-        elif action == 'leaving':
-            self.occupants.remove(player_obj)
+    def reset_occupants(self):
+        self.occupants = []
+
+    def add_occupants(self, player_obj):
+        self.occupants.append(player_obj)

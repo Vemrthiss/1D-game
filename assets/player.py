@@ -2,7 +2,7 @@ class Player():
     def __init__(self, player_no):
         self.player_no = player_no
         self.token = ''
-        self.wallet = 1000 # current amount of player
+        self.wallet = 2000 # current amount of player
         self.properties = [] #empty list of property objects
         self.position = 0 # a single number representing current position on board (board is just a 1D list connected at its ends)
         self.is_in_jail = False

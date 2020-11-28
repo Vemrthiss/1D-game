@@ -26,13 +26,20 @@ def init_board():
     fresh_board[4] = Tax.Tax('small')
     fresh_board[38] = Tax.Tax('large')
 
-    fresh_board[5] = Station.Station('Jurong West')
-    fresh_board[15] = Station.Station('Ang Mo Kio')
-    fresh_board[25] = Station.Station('Bedok')
-    fresh_board[35] = Station.Station('Harbourfront')
+    fresh_board[5] = Station.Station('Jurong West', 200)
+    fresh_board[15] = Station.Station('Bishan', 200)
+    fresh_board[25] = Station.Station('Bedok', 250)
+    fresh_board[35] = Station.Station('Harbourfront', 300)
 
-    fresh_board[12] = Utility.Utility('Water Bills')
-    fresh_board[28] = Utility.Utility('Electricity Bills')
+    fresh_board[12] = Utility.Utility('PUB Water', 100)
+    fresh_board[28] = Utility.Utility('SP Electricity', 150)
+
+    #sets street tiles
+    for street in BoardInfo.board_streets:
+        street_pos = street['position']
+        street_name = street['name']
+        street_value = street['value']
+        fresh_board[street_pos] = Street.Street(street_name, street_value)
 
     return fresh_board
 
@@ -41,7 +48,7 @@ def display_board(board):
     first_row = ''
     for tile in board[:11]:
         first_row += f'{str(tile)}'
-    print(f'\n{first_row}')
+    print(f'\n----------------------------------------------------------------------THIS IS THE BOARD----------------------------------------------------------------------\n{first_row}')
     
     right_column = board[11:20]
     left_column = board[31:][::-1]
@@ -53,9 +60,11 @@ def display_board(board):
     last_row = ''
     for tile in board[20:31][::-1]:
         last_row += f'{str(tile)}'
-    print(f'{last_row}\n')
+    print(f'{last_row}\n------------------------------------------------------------------------END OF BOARD-------------------------------------------------------------------------\n')
 
-def update_board(old_tile, new_tile, player_obj): #should this method even exist?
-    #the tile arguments are children of the BoardTile class
-    old_tile.update_occupants(player_obj, 'leaving')
-    new_tile.update_occupants(player_obj, 'entering')
+def update_board(board, players_ls):
+    players_pos = [player.position for player in players_ls] #list of all current player positions
+    for tile in board:
+        tile.reset_occupants() #clears all tiles first
+    for index, position in enumerate(players_pos):
+        board[position].add_occupants(players_ls[index]) #index refers to that player object's index in the game_players state list\
