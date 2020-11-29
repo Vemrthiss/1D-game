@@ -122,12 +122,12 @@ for user in itertools.cycle(game_players): # infinitely cycle through the list
                 end_turn = True
             
             elif action == 'roll_dice': #rolling dice entails that user moves and handling of what happens when the user lands on a tile is done here
-                # diceroll1 = random.randint(1, 6) #simulates a single dice roll
-                # diceroll2 = random.randint(1, 6)
-                # user_diceroll = diceroll1 + diceroll2
-                # print(f'You rolled a {diceroll1} and a {diceroll2}, totalling to {user_diceroll}')
+                diceroll1 = random.randint(1, 6) #simulates a single dice roll
+                diceroll2 = random.randint(1, 6)
+                user_diceroll = diceroll1 + diceroll2
+                print(f'You rolled a {diceroll1} and a {diceroll2}, totalling to {user_diceroll}')
                 
-                # user.update_position(user_diceroll) #adds diceroll to previous position of user
+                user.update_position(user_diceroll) #adds diceroll to previous position of user
                 
                 #------testing each tile's functionality-------
                 #user.update_position(30) #testing go_jail functionality
@@ -139,8 +139,42 @@ for user in itertools.cycle(game_players): # infinitely cycle through the list
 
                 landed_tile = game_board[user.position] #represents the tile object on which the user has landed
                 if hasattr(landed_tile, 'owner'): #checks if the tile might have an owner
-                    print('tile is ownable')
-                    
+                    if landed_tile.owner != 0: #if property is already owned, pay respective rent
+                        # finding the current owner (as a Player object)
+                        for player in game_players:
+                            if player.player_no == landed_tile.owner.player_no:
+                                property_owner = player
+                                break #once owner is found, break the for loop
+                        
+                        rental_due = landed_tile.rental
+                        print(f'The property you landed on is already owned by Player {property_owner.player_no} or {property_owner.token}. You have to pay him/her rent of ${rental_due}!')
+                        user.update_wallet(-rental_due) #user pays money
+                        property_owner.update_wallet(rental_due) #owner receives money
+                        print(f'You now have ${user.wallet} and Player {property_owner.player_no} has ${property_owner.wallet}')
+
+                    else: #if property is NOT owned, give choice to current user to buy it, (if not set up an auction)
+                        purchase_options = ['Y', 'N']
+                        property_name = landed_tile.name
+                        property_price = landed_tile.listing_price
+                        property_type = 'Station' if landed_tile.symbol == 'STATION' else 'Utility' if landed_tile.symbol == 'UTILITY' else 'Street'
+
+                        user_purchase = input(f'This {property_type} property "{property_name}" is currently not owned! Would you like to buy it at its listed price of ${property_price}? [Y / N] ')
+                        while user_purchase not in purchase_options:
+                            print('Please input a valid option given in the square brackets above')
+                            user_purchase = input(f'This {property_type} property "{property_name}" is currently not owned! Would you like to buy it at its listed price of ${property_price}? [Y / N] ')
+                        
+                        if user_purchase == 'Y': #user wants to buy property
+                            if user.wallet >= property_price:
+                                landed_tile.update_owner(user) #assigns owner (player obj) to this property tile
+                                user.update_wallet(-property_price) #deducts money from user for property purchase
+                                user.update_properties('add', landed_tile) #adds this property to user's owned properties list
+                                print(f'You have purchased the property {property_name} for ${property_price}. Now you have ${user.wallet} left')
+                            else: #user does not have enough money to buy
+                                print(f'Sorry you do not have enough money to buy this property.')
+                                #to implement asking user if he wants to sell any of his current properties in order to buy this one
+                        else:
+                            pass #to set up auction
+
                 else: #filters out the tiles which are unownable, i.e. start, chest, tax, chance, jail, go_jail, parking
                     if landed_tile.symbol == 'CHANCE':
                         print('You landed on chance!')

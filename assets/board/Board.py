@@ -52,14 +52,14 @@ def display_board(board):
     first_row = ''
     for tile in board[:11]:
         first_row += f'{str(tile)}'
-    print(f'\n----------------------------------------------------------------------THIS IS THE BOARD----------------------------------------------------------------------\n\n{first_row}\n')
+    print(f'\n----------------------------------------------------------------------THIS IS THE BOARD----------------------------------------------------------------------\n\n{first_row}')
     
     right_column = board[11:20]
     left_column = board[31:][::-1]
 
     for left_tile, right_tile in zip(left_column, right_column):
         row = str(left_tile) + (' '*max_tile_length*9) + str(right_tile)
-        print(f'\n{row}\n')
+        print(f'\n{row}')
 
     last_row = ''
     for tile in board[20:31][::-1]:

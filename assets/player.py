@@ -1,6 +1,3 @@
-def filter_properties(prop, prop_name):
-    return prop['name'] == prop_name 
-
 class Player():
     def __init__(self, player_no):
         self.player_no = player_no
@@ -14,7 +11,7 @@ class Player():
         self.is_out = False # turns to true when this player is out of the game
 
     def __str__(self):
-        return f'This is {self.token} or Player {self.player_no} with ${self.wallet}, {self.properties} houses, and is at position {self.position}'
+        return f'This is {self.token} or Player {self.player_no} with ${self.wallet}, {self.properties} properties, and is at position {self.position}'
 
     def set_token(self, token):
         self.token = token
@@ -31,9 +28,8 @@ class Player():
     def update_wallet(self, amount):
         self.wallet += amount #if amount is negative, will minus
 
-    def update_properties(self, action, prop, name_to_remove):
+    def update_properties(self, action, prop): #adds/removes properties for this player
         if action == 'add':
             self.properties.append(prop)
-        else:
-            filtered_iterable = filter(lambda prop: filter_properties(prop, name_to_remove), self.properties)
-            self.properties = list(filtered_iterable)
+        elif action == 'remove':
+            self.properties.remove(prop)
