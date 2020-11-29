@@ -9,6 +9,8 @@ class Player():
         self.properties = [] #empty list of property objects
         self.position = 0 # a single number representing current position on board (board is just a 1D list connected at its ends)
         self.is_in_jail = False
+        self.has_jail_card = False # denotes if user has get out of jail card
+        self.jail_roll_counter = 0 #keeps track of how many times the user has tried to roll doubles to get out of jail
         self.is_out = False # turns to true when this player is out of the game
 
     def __str__(self):

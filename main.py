@@ -46,23 +46,79 @@ for user in game_players:
 board.set_start_tile(game_board, game_players)
 display_board()
 
+#---testing if user in jail functionality----
+# game_players[0].is_in_jail = True
+# game_players[0].has_jail_card = True
+# game_players[0].position = 10
+# update_display_board()
+
 # --------------STARTS THE MAIN 'WHILE' LOOP---------------------
 for user in itertools.cycle(game_players): # infinitely cycle through the list
-    if user.is_in_jail: #if user is in jail, has a different set of actions
-        continue
+    end_turn = False
+    
+    if user.is_in_jail: #if user is in jail, has a different set of actions, ---------------VERIFIED-----------------
+        jail_tile = game_board[10] #jail tile obj
+        possible_actions = ['show_my_info', 'pay']
+        if user.jail_roll_counter < 3:
+            possible_actions.append('roll')
+        if user.has_jail_card: #if user has a out of jail card, add it as one of the options
+            possible_actions.append('use_card')
+        possible_actions_str = ' / '.join(possible_actions)
+
+        print(f'Dear Player {user.player_no}, you are sadly in jail :(\n')
+        print(f'There are 3 ways to get out of here:\n1) Pay a fine of ${jail_tile.fine}\n2) Roll doubles\n3) Use a Get Out of Jail Free card (if you have)\n')
+
+        while not end_turn:
+            if 'roll' in possible_actions: 
+                print('Do note that choosing "roll" will end your turn immediately afterwards.')
+            action = input(f'What would you like to do? [{possible_actions_str}] ')
+            while action not in possible_actions:
+                print('Please type in something valid from the options given')
+                if 'roll' in possible_actions: 
+                    print('Do note that choosing "roll" will end your turn immediately afterwards.')
+                action = input(f'What would you like to do? [{possible_actions_str}] ')
+
+            if action == 'show_my_info':
+                print(user)
+            elif action == 'roll':
+                print(f'You can only attempt to roll doubles once a turn. If you fail 3 consecutive turns, you would be forced to either pay the fine or use the Get Out of Jail Free card.')
+                user.jail_roll_counter += 1 # updates counter
+                diceroll1 = random.randint(1, 6)
+                diceroll2 = random.randint(1, 6)
+                if diceroll1 == diceroll2: # a double is rolled
+                    print(f'Congratulations! You rolled doubles of {diceroll1}. You are free to go.')
+                    jail_tile.remove_user_from_jail(user)
+                    update_display_board()
+                else: # if no double is rolled
+                    print(f'Oh no! You failed to roll a double. What you rolled was a {diceroll1} and a {diceroll2}.\nYou have attempted to roll doubles for {user.jail_roll_counter} time(s).')   
+                    
+                end_turn = True # ends turn after a roll, regardless of outcome
+            else:
+                if action == 'pay': #VERIFIED
+                    user.update_wallet(-jail_tile.fine)
+                    print(f'${jail_tile.fine} has been deducted from your wallet and now you have ${user.wallet} left.')
+                elif action == 'use_card': #VERIFIED
+                    user.has_jail_card = False #removes jail card from user
+                    print('You used your Get Out of Jail Free card!')
+                
+                # these 2 actions will guarantee the user being removed from jail and ends his turn
+                jail_tile.remove_user_from_jail(user)
+                update_display_board()
+                end_turn = True
+
 
     else: #if user is not in jail
         possible_actions = ['roll_dice', 'show_my_info', 'end_turn']
         possible_actions_str = ' / '.join(possible_actions) #str representation of possible actions user can take
-        end_turn = False
 
-        while not end_turn and not user.is_out:
+        while not end_turn and not user.is_out: #user.is_out checks if this user is still in the game
             action = input(f'Dear Player {user.player_no}, what would you like to do? [{possible_actions_str}] ')
             while action not in possible_actions:
                 print('Please type in something valid from the options given')
                 action = input(f'Dear Player {user.player_no}, what would you like to do? [{possible_actions_str}] ')
 
             if action == 'end_turn':
+                display_board() #display the board before ending an empty turn
                 end_turn = True
             
             elif action == 'roll_dice': #rolling dice entails that user moves and handling of what happens when the user lands on a tile is done here
@@ -76,7 +132,7 @@ for user in itertools.cycle(game_players): # infinitely cycle through the list
                 #------testing each tile's functionality-------
                 #user.update_position(30) #testing go_jail functionality
                 #user.update_position(4) #testing road tax
-                user.update_position(38) #testing income tax
+                #user.update_position(38) #testing income tax
                 #-----end of testing-------------------------
 
                 update_display_board()
@@ -86,8 +142,6 @@ for user in itertools.cycle(game_players): # infinitely cycle through the list
                     print('tile is ownable')
                     
                 else: #filters out the tiles which are unownable, i.e. start, chest, tax, chance, jail, go_jail, parking
-                    print('tile is unownable')
-
                     if landed_tile.symbol == 'CHANCE':
                         print('You landed on chance!')
 
@@ -104,7 +158,7 @@ for user in itertools.cycle(game_players): # infinitely cycle through the list
                             user.update_wallet(-amount_to_deduct)
                             print(f'For income tax, you either pay $200 or 10% of your total net worth, whichever is higher. You have paid ${amount_to_deduct} and are now left with ${user.wallet}')
 
-                    elif landed_tile.symbol == 'JAIL':
+                    elif landed_tile.symbol == 'JAIL': #VERIFED
                         print("You landed on jail! But don't worry, you're only visiting.")
 
                     elif landed_tile.symbol == 'GO_JAIL': #VERIFIED
@@ -112,8 +166,10 @@ for user in itertools.cycle(game_players): # infinitely cycle through the list
                         input('Press Enter to continue...') #a way to ask for user acknowledgement before sending that user to jail
                         landed_tile.send_user_to_jail(user) #sends user to jail, method from CornerTile.GoJail class
                         update_display_board()
+                        print(f"Player {user.player_no}'s turn will end now")
+                        end_turn = True # once user lands into jail, his turn ends
 
-                    elif landed_tile.symbol == 'PARKING':
+                    elif landed_tile.symbol == 'PARKING': #VERFIED
                         print('You landed on free parking!...which does nothing, have a good day!')
 
 
@@ -121,7 +177,7 @@ for user in itertools.cycle(game_players): # infinitely cycle through the list
                 possible_actions.remove('roll_dice') #user can only roll dice once in his turn
                 possible_actions_str = ' / '.join(possible_actions) #updates the possible actions string
 
-            elif action == 'show_my_info':
+            elif action == 'show_my_info': #TO LOOK INTO IT AGAIN, SEE HOW BETTER TO DISPLAY USER INFO
                 print(user)
 
             else: #for testing only until other actions have been coded up
