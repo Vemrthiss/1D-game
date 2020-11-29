@@ -10,8 +10,8 @@ class BoardTile():
         #self.symbol to be declared in child classes
         #return f'{self.name: <{self.max_tile_length}}\n{self.symbol: <{self.max_tile_length}}'
         user_tokens = [occupant.token for occupant in self.occupants]
-        user_token_str = f"({', '.join(user_tokens)})"
-        str_repr = f'{self.symbol} {user_token_str}' if len(user_tokens) != 0 else self.symbol
+        user_tokens_str = f"({', '.join(user_tokens)})"
+        str_repr = f'{self.symbol} {user_tokens_str}' if len(user_tokens) != 0 else self.symbol
     
         return f'{str_repr: <{self.max_tile_length}}'
     

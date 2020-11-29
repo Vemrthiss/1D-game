@@ -43,28 +43,32 @@ def init_board():
 
     return fresh_board
 
+def set_start_tile(board, players_ls):
+    for player in players_ls:
+        board[0].add_occupants(player) #adds ALL players to the start position
+
 # receives a board list (from app state) and displays it
 def display_board(board):
     first_row = ''
     for tile in board[:11]:
         first_row += f'{str(tile)}'
-    print(f'\n----------------------------------------------------------------------THIS IS THE BOARD----------------------------------------------------------------------\n{first_row}')
+    print(f'\n----------------------------------------------------------------------THIS IS THE BOARD----------------------------------------------------------------------\n\n{first_row}\n')
     
     right_column = board[11:20]
     left_column = board[31:][::-1]
 
     for left_tile, right_tile in zip(left_column, right_column):
         row = str(left_tile) + (' '*max_tile_length*9) + str(right_tile)
-        print(row)
+        print(f'\n{row}\n')
 
     last_row = ''
     for tile in board[20:31][::-1]:
         last_row += f'{str(tile)}'
-    print(f'{last_row}\n------------------------------------------------------------------------END OF BOARD-------------------------------------------------------------------------\n')
+    print(f'\n{last_row}\n\n------------------------------------------------------------------------END OF BOARD-------------------------------------------------------------------------\n')
 
 def update_board(board, players_ls):
     players_pos = [player.position for player in players_ls] #list of all current player positions
     for tile in board:
         tile.reset_occupants() #clears all tiles first
     for index, position in enumerate(players_pos):
-        board[position].add_occupants(players_ls[index]) #index refers to that player object's index in the game_players state list\
+        board[position].add_occupants(players_ls[index]) #index refers to that player object's index in the game_players state list
