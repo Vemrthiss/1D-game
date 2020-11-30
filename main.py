@@ -3,11 +3,13 @@ import assets.Player as player
 import assets.board.Board as board
 
 # ----------------------------------APPLICATION STATE TO INITIALISE----------------------------------
-game_players = []
+game_players = [] #current game players
+out_players = [] #list of out players, since it is ordered, also tracks who came in last, 2nd last etc
 game_properties = [] #list of all 22 houses to be on the board
 game_board = board.init_board() # initalises a persisting BOARD STATE, to be taken reference whenever the board is to be printed
 #game_is_running = True #controls the main game loop
 
+# -----------------------------------FUNCTIONS-------------------------------------------
 #rewriting imported functions as they always take the same arguments FROM THE APP STATE
 def update_display_board(): #updates AND displays board
     board.update_board(game_board, game_players)
@@ -15,6 +17,116 @@ def update_display_board(): #updates AND displays board
 
 def display_board():
     board.display_board(game_board)
+
+
+#defining reusable functions:
+def remove_player(player_obj):
+    player_obj.is_out = True # sets this attr in the player object to be true
+    game_players.remove(player_obj)
+    out_players.append(player_obj)
+
+def pay_someone(player_obj, creditor, amount_due):
+    player_obj.update_wallet(-amount_due)
+    if creditor != 'bank': #if paying to another player
+        creditor.update_wallet(amount_due)
+
+def liquidate_property(player_obj, prop):
+    prop.update_owner(0) #0 means return to the bank
+    player_obj.update_properties('remove', prop) # removes ownership from player obj
+    player_obj.update_wallet(prop.selling_price) # player gets money
+    print(f'You sold your {prop.name} property for ${prop.selling_price}. You now have ${player_obj.wallet}')
+
+def sell_properties(player_obj):
+    affirmations = ['Y', 'N']
+    selling = True
+    while selling:
+        num_properties = len(player_obj.properties)
+        properties_list = ''
+        for index, prop in enumerate(player_obj.properties):
+            properties_list += f'\n{index+1}) {prop.name} {prop.symbol} (${prop.selling_price})'
+        print(f'You currently own these properties: {properties_list}')
+
+        if num_properties == 1: #if user only has 1 property
+            only_property = player_obj.properties[0]
+            user_affirmation = input(f'Would you like to sell this {only_property.name} property? [Y / N] ')
+            while user_affirmation not in affirmations:
+                print('Please type in something valid from the options given')
+                user_affirmation = input(f'Would you like to sell this {only_property.name} property? [Y / N] ')
+            if user_affirmation == 'Y': #if user wants to sell
+                liquidate_property(player_obj, only_property)
+            selling = False
+
+        else: #user has more than 1 property
+            prop_index_to_sell = input('Which property would you like to sell (refer to the numbering)? Entering 0 means you do not want to sell any properties. ')
+            while not prop_index_to_sell.isdigit() and int(prop_index_to_sell) not in range(1, num_properties):
+                print(f'Please input a number between 1 and {num_properties}')
+                prop_index_to_sell = input('Which property would you like to sell (refer to the numbering)? Entering 0 means you do not want to sell any properties. ')
+            prop_index_to_sell = int(prop_index_to_sell)
+
+            if prop_index_to_sell == 0:
+                selling = False
+            else: #if user wants to sell properties
+                prop_to_sell = player_obj.properties[prop_index_to_sell-1] #because 0 indexed
+                liquidate_property(player_obj, prop_to_sell)
+                sell_again = input('Would you like to sell another property? [Y / N] ')
+                while sell_again not in affirmations:
+                    print('Please type in something valid from the options given')
+                    sell_again = input('Would you like to sell another property? [Y / N] ')
+
+                if sell_again == 'N':
+                    selling = False
+
+def bankruptcy_check(player_obj, creditor, amount_due):
+    if player_obj == creditor:
+        print("You landed on your own property! You of course don't pay rent.")
+    
+    elif player_obj.wallet < amount_due: #if player has lesser money than what is owed
+        if player_obj.properties: #if player owns assets
+            #calculates total liquidation value of player's assets
+            total_liquidity = 0
+            for prop in player_obj.properties:
+                total_liquidity += prop.selling_price
+            
+            if total_liquidity + player_obj.wallet < amount_due: #when ALL player's assets' liquidation value  AND his current money CANNOT meet amount owed
+                print(f'Although you have assets, their total liquidation value of ${total_liquidity} and your current holdings of ${player_obj.wallet} is lesser than the ${amount_due} which you owe.')
+                if creditor != 'bank': 
+                    print(f'In order to pay up the debt, all your current assets will be transferred to Player {creditor.player_no}. You are now bankrupt and are out of the game.')
+                else:
+                    print('In order to pay up the debt, all your current assets will be transferred to the Bank. You are now bankrupt and are out of the game.')
+                
+                #TRANSFERRING OWNERSHIP OF PROPERTIES (no money involved)
+                for prop in player_obj.properties:
+                    player_obj.update_properties('remove', prop)
+                    if creditor != 'bank': #if creditor is another player
+                        prop.update_owner(creditor)
+                        creditor.update_properties('add', prop)
+                    else:
+                        prop.update_owner(0)
+                #--------------------------LOSING CONDITION------------------------------
+                remove_player(player_obj) #removing this player from the game
+
+            else: #when player can sell assets to pay money owed
+                print(f'Oops you owe money but currently do not have enough (you have ${player_obj.wallet}) to pay up your debt (${amount_due})! Your current ownings can be liquidated to clear your debt.')
+                # ----------SELLING PROPERTIES-------------
+                sell_properties(player_obj)
+                #once user decides to stop selling the first round above (do while loop)
+                while player_obj.wallet < amount_due: #if still not enough money, force user to sell properties
+                    print(f'Sorry you must sell your properties to pay your debt. You currently have ${player_obj.wallet} and you owe ${amount_due}.')
+                    sell_properties(player_obj)
+                #once user has enough money, pay money to creditor
+                pay_someone(player_obj, creditor, amount_due) #creditor could be 'bank
+                if creditor != 'bank':
+                    print(f'You have paid Player {creditor.player_no} ${amount_due}.')
+                else:
+                    print(f'You have paid the Bank ${amount_due}.')
+
+        else: # if player does not own any asset
+            print(f'Dear Player {player_obj.player_no}, you have run out of money and have no properties to mortgage. You are now bankrupt and are out of the game.')
+            #----------------------LOSING CONDITION---------------------------
+            remove_player(player_obj)
+
+    else: #user has enough money. pay creditor 
+        pay_someone(player_obj, creditor, amount_due) #creditor could be 'bank'
 
 
 # ----------------------------------------GAME CODE---------------------------------------
@@ -35,10 +147,10 @@ for player_no in range(1, num_players+1):
 # asks that user for their token/initials for board display, and updates the state
 taken_user_tokens = [] #stores current user tokens taken, makes sure that tokens are unique
 for user in game_players:
-    user_token = input(f'Dear Player {user.player_no}, please enter your initials which will be displayed on the board. ')
-    while not user_token or user_token in taken_user_tokens: #runs if user_token is an empty string, a falsey value
-        print('Please enter something, or enter something unique')
-        user_token = input(f'Dear Player {user.player_no}, please enter your initials which will be displayed on the board. ')
+    user_token = input(f'Dear Player {user.player_no}, please enter your initials (max 2 characters) which will be displayed on the board. ')
+    while not user_token or user_token in taken_user_tokens or len(user_token) > 2: #runs if user_token is an empty string, a falsey value
+        print('Please enter something, enter something unique, or enter maximum of 2 characters only.')
+        user_token = input(f'Dear Player {user.player_no}, please enter your initials (max 2 characters) which will be displayed on the board. ')
     user.set_token(user_token)
     taken_user_tokens.append(user_token)
 
@@ -55,8 +167,12 @@ display_board()
 # --------------STARTS THE MAIN 'WHILE' LOOP---------------------
 for user in itertools.cycle(game_players): # infinitely cycle through the list
     end_turn = False
-    
-    if user.is_in_jail: #if user is in jail, has a different set of actions, ---------------VERIFIED-----------------
+    if len(game_players) == 1:
+        print('Game has ended!')
+        break
+
+    #when there is more than 1 player
+    elif user.is_in_jail: #if user is in jail, has a different set of actions, ---------------VERIFIED-----------------
         jail_tile = game_board[10] #jail tile obj
         possible_actions = ['show_my_info', 'pay']
         if user.jail_roll_counter < 3:
@@ -111,7 +227,7 @@ for user in itertools.cycle(game_players): # infinitely cycle through the list
         possible_actions = ['roll_dice', 'show_my_info', 'end_turn']
         possible_actions_str = ' / '.join(possible_actions) #str representation of possible actions user can take
 
-        while not end_turn and not user.is_out: #user.is_out checks if this user is still in the game
+        while not end_turn:
             action = input(f'Dear Player {user.player_no}, what would you like to do? [{possible_actions_str}] ')
             while action not in possible_actions:
                 print('Please type in something valid from the options given')
@@ -125,8 +241,6 @@ for user in itertools.cycle(game_players): # infinitely cycle through the list
                 diceroll1 = random.randint(1, 6) #simulates a single dice roll
                 diceroll2 = random.randint(1, 6)
                 user_diceroll = diceroll1 + diceroll2
-                print(f'You rolled a {diceroll1} and a {diceroll2}, totalling to {user_diceroll}')
-                
                 user.update_position(user_diceroll) #adds diceroll to previous position of user
                 
                 #------testing each tile's functionality-------
@@ -136,9 +250,13 @@ for user in itertools.cycle(game_players): # infinitely cycle through the list
                 #-----end of testing-------------------------
 
                 update_display_board()
+                print(f'You rolled a {diceroll1} and a {diceroll2}, totalling to {user_diceroll}')
 
                 landed_tile = game_board[user.position] #represents the tile object on which the user has landed
                 if hasattr(landed_tile, 'owner'): #checks if the tile might have an owner
+                    property_name = landed_tile.name
+                    property_type = 'Station' if landed_tile.symbol == 'STATION' else 'Utility' if landed_tile.symbol == 'UTILITY' else 'Street'
+
                     if landed_tile.owner != 0: #if property is already owned, pay respective rent
                         # finding the current owner (as a Player object)
                         for player in game_players:
@@ -147,17 +265,16 @@ for user in itertools.cycle(game_players): # infinitely cycle through the list
                                 break #once owner is found, break the for loop
                         
                         rental_due = landed_tile.rental
-                        print(f'The property you landed on is already owned by Player {property_owner.player_no} or {property_owner.token}. You have to pay him/her rent of ${rental_due}!')
-                        user.update_wallet(-rental_due) #user pays money
-                        property_owner.update_wallet(rental_due) #owner receives money
+                        print(f'This {property_type} property "{property_name}" you landed on is already owned by Player {property_owner.player_no} or {property_owner.token}. You have to pay him/her rent of ${rental_due}!')
+                        #------------------CHECK--------------------------
+                        bankruptcy_check(user, property_owner, rental_due)
+                        # user.update_wallet(-rental_due) #user pays money
+                        # property_owner.update_wallet(rental_due) #owner receives money
                         print(f'You now have ${user.wallet} and Player {property_owner.player_no} has ${property_owner.wallet}')
 
                     else: #if property is NOT owned, give choice to current user to buy it, (if not set up an auction)
                         purchase_options = ['Y', 'N']
-                        property_name = landed_tile.name
                         property_price = landed_tile.listing_price
-                        property_type = 'Station' if landed_tile.symbol == 'STATION' else 'Utility' if landed_tile.symbol == 'UTILITY' else 'Street'
-
                         user_purchase = input(f'This {property_type} property "{property_name}" is currently not owned! Would you like to buy it at its listed price of ${property_price}? [Y / N] ')
                         while user_purchase not in purchase_options:
                             print('Please input a valid option given in the square brackets above')
@@ -185,12 +302,16 @@ for user in itertools.cycle(game_players): # infinitely cycle through the list
                     elif landed_tile.symbol == 'TAX': #VERIFIED
                         print("It's time to pay taxes!")
                         if hasattr(landed_tile, 'amount'): #if the tile already has am 'amount' attribute, it is road tax
-                            user.update_wallet(-100)
-                            print(f'$100 has been deducted from your wallet for road tax. You are now left with ${user.wallet}')
+                            road_tax = 100
+                            bankruptcy_check(user, 'bank', road_tax)
+                            #user.update_wallet(-road_tax)
+                            print(f'${road_tax} has been deducted from your wallet for road tax. You are now left with ${user.wallet}')
                         else: #income tax tile
                             amount_to_deduct = landed_tile.determine_income_tax(user)
-                            user.update_wallet(-amount_to_deduct)
-                            print(f'For income tax, you either pay $200 or 10% of your total net worth, whichever is higher. You have paid ${amount_to_deduct} and are now left with ${user.wallet}')
+                            print(f'For income tax, you either pay $200 or 10% of your total net worth, whichever is higher.')
+                            bankruptcy_check(user, 'bank', amount_to_deduct)
+                            #user.update_wallet(-amount_to_deduct)
+                            print(f'You have paid ${amount_to_deduct} and are now left with ${user.wallet}')
 
                     elif landed_tile.symbol == 'JAIL': #VERIFED
                         print("You landed on jail! But don't worry, you're only visiting.")
@@ -218,25 +339,12 @@ for user in itertools.cycle(game_players): # infinitely cycle through the list
                 continue
 
 
-# ------------------------------------------------TESTING---------------------------------------------------
-#for testing: assigning player object(s) a position through hard coding
-# test_user = game_players[0]
-# test_user.update_position(2) #gives the player object a new position at pos 2
-# print(game_players[0]) #verifies that the above action updates the app state of game players
-# update_board()
-# display_board()
-# print(game_board[2].occupants)
-# test_user2 = game_players[1]
-# test_user2.update_position(4)
-# print(game_players[1])
-# update_board()
-# display_board()
-# print(game_board[4].occupants)
-# test_user.update_position(4)
-# print(game_players[0])
-# update_board()
-# display_board()
-# print(game_board[4].occupants)
-
-# for user in game_players:
-#     print(user)
+#---------------------------------------------------CONCLUDING THE GAME----------------------------------------------------------
+print('------------------------------------------GAME REPORT-------------------------------------------------')
+print('The game has ended!')
+winner_obj = game_players[0] #the last player standing
+print(f'Player {winner_obj.player_no}/{winner_obj.token} has won with ${winner_obj.wallet}!')
+pos_counter = 2
+for player in out_players[::-1]:
+    print(f'{pos_counter}) Player {player.player_no}/{player.token}')
+    pos_counter += 1
