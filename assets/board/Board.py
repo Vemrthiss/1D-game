@@ -1,5 +1,6 @@
 from assets.tiles import *
 import assets.board.BoardInfo as BoardInfo
+import random
 
 num_tiles = BoardInfo.num_tiles #total number of tiles
 max_tile_length = BoardInfo.max_tile_length
@@ -72,3 +73,14 @@ def update_board(board, players_ls):
         tile.reset_occupants() #clears all tiles first
     for index, position in enumerate(players_pos):
         board[position].add_occupants(players_ls[index]) #index refers to that player object's index in the game_players state list
+
+#-----------randomises and returns the list of chance and chest cards--------------
+def init_chances():
+    board_chances = BoardInfo.board_chances
+    random.shuffle(board_chances)
+    return board_chances
+
+def init_chests():
+    board_chests = BoardInfo.board_chests
+    random.shuffle(board_chests)
+    return board_chests

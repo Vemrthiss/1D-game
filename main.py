@@ -7,7 +7,8 @@ game_players = [] #current game players
 out_players = [] #list of out players, since it is ordered, also tracks who came in last, 2nd last etc
 game_properties = [] #list of all 22 houses to be on the board
 game_board = board.init_board() # initalises a persisting BOARD STATE, to be taken reference whenever the board is to be printed
-#game_is_running = True #controls the main game loop
+game_chances = board.init_chances() #initialises a randomised chance deck
+game_chests = board.init_chests() #initalises a randomised chest deck
 
 # -----------------------------------FUNCTIONS-------------------------------------------
 #rewriting imported functions as they always take the same arguments FROM THE APP STATE
@@ -20,6 +21,38 @@ def display_board():
 
 
 #defining reusable functions:
+def send_user_to_jail(player_obj): #send player to jail
+    print('Uh oh! Time to go to jail!')
+    input('Press Enter to continue...') #a way to ask for user acknowledgement before sending that user to jail
+    player_obj.position = 10 #jail's position
+    player_obj.is_in_jail = True
+    update_display_board()
+    print(f"Player {player_obj.player_no}'s turn will end now")
+
+def remove_user_from_jail(player_obj): # removes user from jail
+    player_obj.is_in_jail = False #note that player's position will still be 10
+    player_obj.jail_roll_counter = 0 #resets the counter
+    print('You are now out of jail!')
+
+def move_nearest_property(property_ls, current_pos, player_obj): #for 'advance to nearest xxx' chance cards
+    ls_index = 0
+    max_difference = 0
+    for index, pos in enumerate(property_ls):
+        pos_difference = abs(current_pos - pos)
+        if pos_difference > max_difference:
+            max_difference = pos_difference
+            ls_index = index
+    pos_to_move_to = property_ls[ls_index]
+    player_obj.update_position(pos_to_move_to - current_pos)
+    update_display_board()
+
+def advance_to_start(player_obj, current_pos):
+    start_index = 40
+    increment = start_index - current_pos
+    player_obj.update_position(increment)
+    update_display_board()
+    print('You are brought to the start and have received $200.')
+
 def remove_player(player_obj):
     player_obj.is_out = True # sets this attr in the player object to be true
     game_players.remove(player_obj)
@@ -116,9 +149,9 @@ def bankruptcy_check(player_obj, creditor, amount_due):
                 #once user has enough money, pay money to creditor
                 pay_someone(player_obj, creditor, amount_due) #creditor could be 'bank
                 if creditor != 'bank':
-                    print(f'You have paid Player {creditor.player_no} ${amount_due}.')
+                    print(f'You have paid Player {creditor.player_no} ${amount_due}. You now have ${player_obj.wallet}.')
                 else:
-                    print(f'You have paid the Bank ${amount_due}.')
+                    print(f'You have paid the Bank ${amount_due}. You now have ${player_obj.wallet}.')
 
         else: # if player does not own any asset
             print(f'Dear Player {player_obj.player_no}, you have run out of money and have no properties to mortgage. You are now bankrupt and are out of the game.')
@@ -127,7 +160,10 @@ def bankruptcy_check(player_obj, creditor, amount_due):
 
     else: #user has enough money. pay creditor 
         pay_someone(player_obj, creditor, amount_due) #creditor could be 'bank'
-
+        if creditor != 'bank':
+            print(f'You have paid Player {creditor.player_no} ${amount_due}. You now have ${player_obj.wallet}.')
+        else:
+            print(f'You have paid the Bank ${amount_due}. You now have ${player_obj.wallet}.')
 
 # ----------------------------------------GAME CODE---------------------------------------
 # welcome message
@@ -158,185 +194,240 @@ for user in game_players:
 board.set_start_tile(game_board, game_players)
 display_board()
 
-#---testing if user in jail functionality----
-# game_players[0].is_in_jail = True
-# game_players[0].has_jail_card = True
-# game_players[0].position = 10
-# update_display_board()
-
 # --------------STARTS THE MAIN 'WHILE' LOOP---------------------
 for user in itertools.cycle(game_players): # infinitely cycle through the list
     end_turn = False
-    if len(game_players) == 1:
-        print('Game has ended!')
+    if len(out_players) == 3: # there are 3 players who are out, the game ends
         break
 
-    #when there is more than 1 player
-    elif user.is_in_jail: #if user is in jail, has a different set of actions, ---------------VERIFIED-----------------
-        jail_tile = game_board[10] #jail tile obj
-        possible_actions = ['show_my_info', 'pay']
-        if user.jail_roll_counter < 3:
-            possible_actions.append('roll')
-        if user.has_jail_card: #if user has a out of jail card, add it as one of the options
-            possible_actions.append('use_card')
-        possible_actions_str = ' / '.join(possible_actions)
+    elif user.is_out:
+        continue
 
-        print(f'Dear Player {user.player_no}, you are sadly in jail :(\n')
-        print(f'There are 3 ways to get out of here:\n1) Pay a fine of ${jail_tile.fine}\n2) Roll doubles\n3) Use a Get Out of Jail Free card (if you have)\n')
+    else: #user is in the game
+        if user.is_in_jail: #if user is in jail, has a different set of actions, ---------------VERIFIED-----------------
+            jail_tile = game_board[10] #jail tile obj
+            possible_actions = ['show_my_info', 'pay']
+            if user.jail_roll_counter < 3:
+                possible_actions.append('roll')
+            if user.has_jail_card: #if user has a out of jail card, add it as one of the options
+                possible_actions.append('use_card')
+            possible_actions_str = ' / '.join(possible_actions)
 
-        while not end_turn:
-            if 'roll' in possible_actions: 
-                print('Do note that choosing "roll" will end your turn immediately afterwards.')
-            action = input(f'What would you like to do? [{possible_actions_str}] ')
-            while action not in possible_actions:
-                print('Please type in something valid from the options given')
+            print(f'Dear Player {user.player_no}, you are sadly in jail :(\n')
+            print(f'There are 3 ways to get out of here:\n1) Pay a fine of ${jail_tile.fine}\n2) Roll doubles\n3) Use a Get Out of Jail Free card (if you have)\n')
+
+            while not end_turn:
                 if 'roll' in possible_actions: 
                     print('Do note that choosing "roll" will end your turn immediately afterwards.')
                 action = input(f'What would you like to do? [{possible_actions_str}] ')
+                while action not in possible_actions:
+                    print('Please type in something valid from the options given')
+                    if 'roll' in possible_actions: 
+                        print('Do note that choosing "roll" will end your turn immediately afterwards.')
+                    action = input(f'What would you like to do? [{possible_actions_str}] ')
 
-            if action == 'show_my_info':
-                print(user)
-            elif action == 'roll':
-                print(f'You can only attempt to roll doubles once a turn. If you fail 3 consecutive turns, you would be forced to either pay the fine or use the Get Out of Jail Free card.')
-                user.jail_roll_counter += 1 # updates counter
-                diceroll1 = random.randint(1, 6)
-                diceroll2 = random.randint(1, 6)
-                if diceroll1 == diceroll2: # a double is rolled
-                    print(f'Congratulations! You rolled doubles of {diceroll1}. You are free to go.')
-                    jail_tile.remove_user_from_jail(user)
-                    update_display_board()
-                else: # if no double is rolled
-                    print(f'Oh no! You failed to roll a double. What you rolled was a {diceroll1} and a {diceroll2}.\nYou have attempted to roll doubles for {user.jail_roll_counter} time(s).')   
-                    
-                end_turn = True # ends turn after a roll, regardless of outcome
-            else:
-                if action == 'pay': #VERIFIED
-                    user.update_wallet(-jail_tile.fine)
-                    print(f'${jail_tile.fine} has been deducted from your wallet and now you have ${user.wallet} left.')
-                elif action == 'use_card': #VERIFIED
-                    user.has_jail_card = False #removes jail card from user
-                    print('You used your Get Out of Jail Free card!')
-                
-                # these 2 actions will guarantee the user being removed from jail and ends his turn
-                jail_tile.remove_user_from_jail(user)
-                update_display_board()
-                end_turn = True
-
-
-    else: #if user is not in jail
-        possible_actions = ['roll_dice', 'show_my_info', 'end_turn']
-        possible_actions_str = ' / '.join(possible_actions) #str representation of possible actions user can take
-
-        while not end_turn:
-            action = input(f'Dear Player {user.player_no}, what would you like to do? [{possible_actions_str}] ')
-            while action not in possible_actions:
-                print('Please type in something valid from the options given')
-                action = input(f'Dear Player {user.player_no}, what would you like to do? [{possible_actions_str}] ')
-
-            if action == 'end_turn':
-                display_board() #display the board before ending an empty turn
-                end_turn = True
-            
-            elif action == 'roll_dice': #rolling dice entails that user moves and handling of what happens when the user lands on a tile is done here
-                diceroll1 = random.randint(1, 6) #simulates a single dice roll
-                diceroll2 = random.randint(1, 6)
-                user_diceroll = diceroll1 + diceroll2
-                user.update_position(user_diceroll) #adds diceroll to previous position of user
-                
-                #------testing each tile's functionality-------
-                #user.update_position(30) #testing go_jail functionality
-                #user.update_position(4) #testing road tax
-                #user.update_position(38) #testing income tax
-                #-----end of testing-------------------------
-
-                update_display_board()
-                print(f'You rolled a {diceroll1} and a {diceroll2}, totalling to {user_diceroll}')
-
-                landed_tile = game_board[user.position] #represents the tile object on which the user has landed
-                if hasattr(landed_tile, 'owner'): #checks if the tile might have an owner
-                    property_name = landed_tile.name
-                    property_type = 'Station' if landed_tile.symbol == 'STATION' else 'Utility' if landed_tile.symbol == 'UTILITY' else 'Street'
-
-                    if landed_tile.owner != 0: #if property is already owned, pay respective rent
-                        # finding the current owner (as a Player object)
-                        for player in game_players:
-                            if player.player_no == landed_tile.owner.player_no:
-                                property_owner = player
-                                break #once owner is found, break the for loop
-                        
-                        rental_due = landed_tile.rental
-                        print(f'This {property_type} property "{property_name}" you landed on is already owned by Player {property_owner.player_no} or {property_owner.token}. You have to pay him/her rent of ${rental_due}!')
-                        #------------------CHECK--------------------------
-                        bankruptcy_check(user, property_owner, rental_due)
-                        # user.update_wallet(-rental_due) #user pays money
-                        # property_owner.update_wallet(rental_due) #owner receives money
-                        print(f'You now have ${user.wallet} and Player {property_owner.player_no} has ${property_owner.wallet}')
-
-                    else: #if property is NOT owned, give choice to current user to buy it, (if not set up an auction)
-                        purchase_options = ['Y', 'N']
-                        property_price = landed_tile.listing_price
-                        user_purchase = input(f'This {property_type} property "{property_name}" is currently not owned! Would you like to buy it at its listed price of ${property_price}? [Y / N] ')
-                        while user_purchase not in purchase_options:
-                            print('Please input a valid option given in the square brackets above')
-                            user_purchase = input(f'This {property_type} property "{property_name}" is currently not owned! Would you like to buy it at its listed price of ${property_price}? [Y / N] ')
-                        
-                        if user_purchase == 'Y': #user wants to buy property
-                            if user.wallet >= property_price:
-                                landed_tile.update_owner(user) #assigns owner (player obj) to this property tile
-                                user.update_wallet(-property_price) #deducts money from user for property purchase
-                                user.update_properties('add', landed_tile) #adds this property to user's owned properties list
-                                print(f'You have purchased the property {property_name} for ${property_price}. Now you have ${user.wallet} left')
-                            else: #user does not have enough money to buy
-                                print(f'Sorry you do not have enough money to buy this property.')
-                                #to implement asking user if he wants to sell any of his current properties in order to buy this one
-                        else:
-                            pass #to set up auction
-
-                else: #filters out the tiles which are unownable, i.e. start, chest, tax, chance, jail, go_jail, parking
-                    if landed_tile.symbol == 'CHANCE':
-                        print('You landed on chance!')
-
-                    elif landed_tile.symbol == 'CHEST':
-                        print('You landed on chest!')
-
-                    elif landed_tile.symbol == 'TAX': #VERIFIED
-                        print("It's time to pay taxes!")
-                        if hasattr(landed_tile, 'amount'): #if the tile already has am 'amount' attribute, it is road tax
-                            road_tax = 100
-                            bankruptcy_check(user, 'bank', road_tax)
-                            #user.update_wallet(-road_tax)
-                            print(f'${road_tax} has been deducted from your wallet for road tax. You are now left with ${user.wallet}')
-                        else: #income tax tile
-                            amount_to_deduct = landed_tile.determine_income_tax(user)
-                            print(f'For income tax, you either pay $200 or 10% of your total net worth, whichever is higher.')
-                            bankruptcy_check(user, 'bank', amount_to_deduct)
-                            #user.update_wallet(-amount_to_deduct)
-                            print(f'You have paid ${amount_to_deduct} and are now left with ${user.wallet}')
-
-                    elif landed_tile.symbol == 'JAIL': #VERIFED
-                        print("You landed on jail! But don't worry, you're only visiting.")
-
-                    elif landed_tile.symbol == 'GO_JAIL': #VERIFIED
-                        print('Uh oh! Time to go to jail!')
-                        input('Press Enter to continue...') #a way to ask for user acknowledgement before sending that user to jail
-                        landed_tile.send_user_to_jail(user) #sends user to jail, method from CornerTile.GoJail class
+                if action == 'show_my_info':
+                    print(user)
+                elif action == 'roll':
+                    print(f'You can only attempt to roll doubles once a turn. If you fail 3 consecutive turns, you would be forced to either pay the fine or use the Get Out of Jail Free card.')
+                    user.jail_roll_counter += 1 # updates counter
+                    diceroll1 = random.randint(1, 6)
+                    diceroll2 = random.randint(1, 6)
+                    if diceroll1 == diceroll2: # a double is rolled
+                        print(f'Congratulations! You rolled doubles of {diceroll1}. You are free to go.')
+                        remove_user_from_jail(user)
                         update_display_board()
-                        print(f"Player {user.player_no}'s turn will end now")
-                        end_turn = True # once user lands into jail, his turn ends
+                    else: # if no double is rolled
+                        print(f'Oh no! You failed to roll a double. What you rolled was a {diceroll1} and a {diceroll2}.\nYou have attempted to roll doubles for {user.jail_roll_counter} time(s).')   
+                        
+                    end_turn = True # ends turn after a roll, regardless of outcome
+                else:
+                    if action == 'pay': #VERIFIED
+                        fine = jail_tile.fine
+                        bankruptcy_check(user, 'bank', fine)
+                    elif action == 'use_card': #VERIFIED
+                        user.has_jail_card = False #removes jail card from user
+                        print('You used your Get Out of Jail Free card!')
+                    
+                    # these 2 actions will guarantee the user being removed from jail and ends his turn
+                    remove_user_from_jail(user)
+                    update_display_board()
+                    end_turn = True
 
-                    elif landed_tile.symbol == 'PARKING': #VERFIED
-                        print('You landed on free parking!...which does nothing, have a good day!')
+
+        else: #if user is not in jail
+            possible_actions = ['roll_dice', 'show_my_info', 'end_turn']
+            possible_actions_str = ' / '.join(possible_actions) #str representation of possible actions user can take
+
+            while not end_turn:
+                action = input(f'Dear Player {user.player_no}, what would you like to do? [{possible_actions_str}] ')
+                while action not in possible_actions:
+                    print('Please type in something valid from the options given')
+                    action = input(f'Dear Player {user.player_no}, what would you like to do? [{possible_actions_str}] ')
+
+                if action == 'end_turn':
+                    display_board() #display the board before ending an empty turn
+                    end_turn = True
+                
+                elif action == 'roll_dice': #rolling dice entails that user moves and handling of what happens when the user lands on a tile is done here
+                    diceroll1 = random.randint(1, 6) #simulates a single dice roll
+                    diceroll2 = random.randint(1, 6)
+                    user_diceroll = diceroll1 + diceroll2
+                    user.update_position(user_diceroll) #adds diceroll to previous position of user
+                    
+                    #------testing each tile's functionality-------
+                    #user.update_position(30) #testing go_jail functionality
+                    #user.update_position(4) #testing road tax
+                    #user.update_position(38) #testing income tax
+                    #-----end of testing-------------------------
+
+                    update_display_board()
+                    print(f'You rolled a {diceroll1} and a {diceroll2}, totalling to {user_diceroll}')
+
+                    landed_tile = game_board[user.position] #represents the tile object on which the user has landed
+                    if hasattr(landed_tile, 'owner'): #checks if the tile might have an owner
+                        property_name = landed_tile.name
+                        property_type = 'Station' if landed_tile.symbol == 'STATION' else 'Utility' if landed_tile.symbol == 'UTILITY' else 'Street'
+
+                        if landed_tile.owner != 0: #if property is already owned, pay respective rent
+                            # finding the current owner (as a Player object)
+                            for player in game_players:
+                                if player.player_no == landed_tile.owner.player_no:
+                                    property_owner = player
+                                    break #once owner is found, break the for loop
+                            
+                            rental_due = landed_tile.rental
+                            print(f'This {property_type} property "{property_name}" you landed on is already owned by Player {property_owner.player_no} or {property_owner.token}. You have to pay him/her rent of ${rental_due}!')
+                            #------------------CHECK--------------------------
+                            bankruptcy_check(user, property_owner, rental_due)
+                            # user.update_wallet(-rental_due) #user pays money
+                            # property_owner.update_wallet(rental_due) #owner receives money
+                            #print(f'You now have ${user.wallet} and Player {property_owner.player_no} has ${property_owner.wallet}') #to omit? what happens if user is removed after the check above?
+
+                        else: #if property is NOT owned, give choice to current user to buy it, (if not set up an auction)
+                            purchase_options = ['Y', 'N']
+                            property_price = landed_tile.listing_price
+                            user_purchase = input(f'This {property_type} property "{property_name}" is currently not owned! Would you like to buy it at its listed price of ${property_price}? [Y / N] ')
+                            while user_purchase not in purchase_options:
+                                print('Please input a valid option given in the square brackets above')
+                                user_purchase = input(f'This {property_type} property "{property_name}" is currently not owned! Would you like to buy it at its listed price of ${property_price}? [Y / N] ')
+                            
+                            if user_purchase == 'Y': #user wants to buy property
+                                if user.wallet >= property_price:
+                                    landed_tile.update_owner(user) #assigns owner (player obj) to this property tile
+                                    user.update_wallet(-property_price) #deducts money from user for property purchase
+                                    user.update_properties('add', landed_tile) #adds this property to user's owned properties list
+                                    print(f'You have purchased the property {property_name} for ${property_price}. Now you have ${user.wallet} left')
+                                else: #user does not have enough money to buy
+                                    print(f'Sorry you do not have enough money to buy this property.')
+                                    #to implement asking user if he wants to sell any of his current properties in order to buy this one
+                            else:
+                                pass #to set up auction
+
+                    else: #filters out the tiles which are unownable, i.e. start, chest, tax, chance, jail, go_jail, parking
+                        if landed_tile.symbol == 'CHANCE':
+                            print('You landed on CHANCE, draw a Chance card!')
+                            current_pos = user.position
+                            drawn_chance = game_chances.pop(0) # removes the card at top of deck and returns it (ls.pop method)
+                            print(f'You received a "{drawn_chance}" Chance card!')
+                            
+                            #--------HANDLING DIFFERENT CHANCES---------------
+                            if drawn_chance == 'Get Out of Jail Free':
+                                user.has_jail_card = True
+
+                            elif drawn_chance == 'Advance to Go': #brings user to start (tile 0) and gives him $200
+                                advance_to_start(user, current_pos)
+
+                            elif drawn_chance == 'Go directly to Jail':
+                                send_user_to_jail(user)
+                                end_turn = True # once user lands into jail, his turn ends
+
+                            elif drawn_chance == 'Go back 3 spaces':
+                                user.update_position(-3)
+                                update_display_board()
+                                print('You were brought back 3 spaces.')
+
+                            elif drawn_chance == 'Advance to nearest Utility':
+                                utility_pos = [12, 28]
+                                move_nearest_property(utility_pos, current_pos, user)
+                                
+                            elif drawn_chance == 'Advance to nearest Station':
+                                station_pos = [5, 15, 25, 35]
+                                move_nearest_property(station_pos, current_pos, user)
+
+                            elif drawn_chance == 'Pay poor tax of $50':
+                                bankruptcy_check(user, 'bank', 50)
+
+                            elif drawn_chance == 'Bank pays you $100 as dividends':
+                                user.update_wallet(100)
+                                print(f'You received $100 and now have ${user.wallet}')
+
+                            game_chances.append(drawn_chance) #after handling the card's actions, move it to the bottom of the deck
+
+                        elif landed_tile.symbol == 'CHEST':
+                            print('You landed on COMMUNITY CHEST, draw a Chest card!')
+                            drawn_chest = game_chests.pop(0)
+                            print(f'You received a "{drawn_chest}" Chest card!')
+
+                            if drawn_chest == 'Get Out of Jail, Free':
+                                user.has_jail_card = True
+
+                            elif drawn_chest == 'Advance to Go': #brings user to start (tile 0) and gives him $200
+                                advance_to_start(user, current_pos)
+
+                            elif drawn_chest == 'Go directly to Jail':
+                                send_user_to_jail(user)
+                                end_turn = True # once user lands into jail, his turn ends
+                            
+                            elif drawn_chest == 'You inherit $100':
+                                user.update_wallet(100)
+                                print(f'You received $100 and now have ${user.wallet}')
+                            
+                            elif drawn_chest == 'Income Tax refund of $200':
+                                user.update_wallet(200)
+                                print(f'You received $200 and now have ${user.wallet}')
+
+                            elif drawn_chest == 'Life Insurance matures, collect $150':
+                                user.update_wallet(150)
+                                print(f'You received $150 and now have ${user.wallet}')
+                            
+                            elif drawn_chest == '$200 Hospital Bill':
+                                bankruptcy_check(user, 'bank', 200)
+                            
+                            elif drawn_chest == '$100 school fees':
+                                bankruptcy_check(user, 'bank', 100)
+
+                            game_chests.append(drawn_chest) #after handling the card's actions, move it to the bottom of the deck
+
+                        elif landed_tile.symbol == 'TAX': #VERIFIED
+                            print("It's time to pay taxes!")
+                            if hasattr(landed_tile, 'amount'): #if the tile already has am 'amount' attribute, it is road tax
+                                print('You have to pay road tax.')
+                                road_tax = 100
+                                bankruptcy_check(user, 'bank', road_tax)
+
+                            else: #income tax tile
+                                amount_to_deduct = landed_tile.determine_income_tax(user)
+                                print(f'For income tax, you either pay $200 or 10% of your total net worth, whichever is higher.')
+                                bankruptcy_check(user, 'bank', amount_to_deduct)
+
+                        elif landed_tile.symbol == 'JAIL': #VERIFED
+                            print("You landed on jail! But don't worry, you're only visiting.")
+
+                        elif landed_tile.symbol == 'GO_JAIL': #VERIFIED
+                            send_user_to_jail(user)
+                            end_turn = True # once user lands into jail, his turn ends
+
+                        elif landed_tile.symbol == 'PARKING': #VERFIED
+                            print('You landed on free parking!...which does nothing, have a good day!')
 
 
-                #--------------------------updating possible actions list-----------------------------
-                possible_actions.remove('roll_dice') #user can only roll dice once in his turn
-                possible_actions_str = ' / '.join(possible_actions) #updates the possible actions string
+                    #--------------------------updating possible actions list-----------------------------
+                    possible_actions.remove('roll_dice') #user can only roll dice once in his turn
+                    possible_actions_str = ' / '.join(possible_actions) #updates the possible actions string
 
-            elif action == 'show_my_info': #TO LOOK INTO IT AGAIN, SEE HOW BETTER TO DISPLAY USER INFO
-                print(user)
-
-            else: #for testing only until other actions have been coded up
-                continue
+                elif action == 'show_my_info': #TO LOOK INTO IT AGAIN, SEE HOW BETTER TO DISPLAY USER INFO
+                    print(user)
 
 
 #---------------------------------------------------CONCLUDING THE GAME----------------------------------------------------------

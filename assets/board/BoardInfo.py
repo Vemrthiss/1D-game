@@ -50,3 +50,7 @@ board_streets = [
     {'position': 32, 'name': 'Mountbatten', 'value': 700}, #d15
     {'position': 34, 'name': 'Tanjong Pagar', 'value': 1200} #D2
 ]
+
+board_chances = ['Get Out of Jail Free', 'Advance to Go', 'Go directly to Jail', 'Go back 3 spaces', 'Advance to nearest Utility', 'Advance to nearest Station', 'Pay poor tax of $50', 'Bank pays you $100 as dividends']
+
+board_chests = ['Get Out of Jail Free', 'Advance to Go', 'Go directly to Jail', 'You inherit $100', 'Income Tax refund of $200', 'Life Insurance matures, collect $150', '$200 Hospital Bill', '$100 school fees']

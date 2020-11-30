@@ -4,7 +4,7 @@ class Property(BoardTile):
     def __init__(self, name, listing_price):
         BoardTile.__init__(self, name)
         self.listing_price = listing_price
-        self.selling_price = .2*listing_price
+        self.selling_price = .05*listing_price
         self.owner = 0
         #self.rental and self.symbol to be set in child classes
 
