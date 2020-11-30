@@ -36,11 +36,11 @@ def remove_user_from_jail(player_obj): # removes user from jail
 
 def move_nearest_property(property_ls, current_pos, player_obj): #for 'advance to nearest xxx' chance cards
     ls_index = 0
-    max_difference = 0
+    min_difference = 0
     for index, pos in enumerate(property_ls):
         pos_difference = abs(current_pos - pos)
-        if pos_difference > max_difference:
-            max_difference = pos_difference
+        if pos_difference < min_difference:
+            min_difference = pos_difference
             ls_index = index
     pos_to_move_to = property_ls[ls_index]
     player_obj.update_position(pos_to_move_to - current_pos)

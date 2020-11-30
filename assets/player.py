@@ -1,3 +1,6 @@
+def get_prop_repr(prop):
+    return f'{prop.name} {prop.symbol}'
+
 class Player():
     def __init__(self, player_no):
         self.player_no = player_no
@@ -11,7 +14,12 @@ class Player():
         self.is_out = False # turns to true when this player is out of the game
 
     def __str__(self):
-        return f'This is {self.token} or Player {self.player_no} with ${self.wallet}, {self.properties} properties, and is at position {self.position}'
+        all_props = []
+        for prop in self.properties:
+            all_props.append(get_prop_repr(prop))
+        all_props_str = ', '.join(all_props)
+
+        return f'----------------\nPlayer {self.player_no}/{self.token}\nWallet: ${self.wallet}\nOwned Properties: {all_props_str}\nHas Get Out of Jail Free Card: {self.has_jail_card}\nIs in Jail: {self.is_in_jail}\n--------------'
 
     def set_token(self, token):
         self.token = token
