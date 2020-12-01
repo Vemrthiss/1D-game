@@ -44,3 +44,6 @@ class Player():
             self.properties.append(prop)
         elif action == 'remove':
             self.properties.remove(prop)
+    
+    def clear_properties(self): #clears ALL properties, used for transfering ownership when bankrupt
+        self.properties = []

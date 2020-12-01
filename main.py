@@ -36,7 +36,7 @@ def remove_user_from_jail(player_obj): # removes user from jail
 
 def move_nearest_property(property_ls, current_pos, player_obj): #for 'advance to nearest xxx' chance cards
     ls_index = 0
-    min_difference = 0
+    min_difference = 100 #arbitrary value, after first for loop iteration, the actual pos_difference values will be compared to one another
     for index, pos in enumerate(property_ls):
         pos_difference = abs(current_pos - pos)
         if pos_difference < min_difference:
@@ -129,12 +129,12 @@ def bankruptcy_check(player_obj, creditor, amount_due):
                 
                 #TRANSFERRING OWNERSHIP OF PROPERTIES (no money involved)
                 for prop in player_obj.properties:
-                    player_obj.update_properties('remove', prop)
                     if creditor != 'bank': #if creditor is another player
                         prop.update_owner(creditor)
                         creditor.update_properties('add', prop)
                     else:
                         prop.update_owner(0)
+                player_obj.clear_properties() #clears all properties from player_obj
                 #--------------------------LOSING CONDITION------------------------------
                 remove_player(player_obj) #removing this player from the game
 
@@ -325,9 +325,10 @@ for user in itertools.cycle(game_players): # infinitely cycle through the list
                                 pass #to set up auction
 
                     else: #filters out the tiles which are unownable, i.e. start, chest, tax, chance, jail, go_jail, parking
+                        current_pos = user.position
+
                         if landed_tile.symbol == 'CHANCE':
                             print('You landed on CHANCE, draw a Chance card!')
-                            current_pos = user.position
                             drawn_chance = game_chances.pop(0) # removes the card at top of deck and returns it (ls.pop method)
                             print(f'You received a "{drawn_chance}" Chance card!')
                             
