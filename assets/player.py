@@ -34,7 +34,7 @@ class Player():
         else: #if new position now is more than length of the board, i.e. passes through start tile
             self.position = new_position - num_tiles # makes sure the position does not exceed list length, else will cause indexing issues
             self.update_wallet(200) #gives this player $200 since he crossed the start tile
-            print('For crossing the Start tile, you received $200')
+            print(f'For crossing the Start tile, you received $200. You now have ${self.wallet}.')
     
     def update_wallet(self, amount):
         self.wallet += amount #if amount is negative, will minus

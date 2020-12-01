@@ -51,7 +51,7 @@ def advance_to_start(player_obj, current_pos):
     increment = start_index - current_pos
     player_obj.update_position(increment)
     update_display_board()
-    print('You are brought to the start and have received $200.')
+    print('You are brought to the start.')
 
 def remove_player(player_obj):
     player_obj.is_out = True # sets this attr in the player object to be true
@@ -370,7 +370,7 @@ for user in itertools.cycle(game_players): # infinitely cycle through the list
                             drawn_chest = game_chests.pop(0)
                             print(f'You received a "{drawn_chest}" Chest card!')
 
-                            if drawn_chest == 'Get Out of Jail, Free':
+                            if drawn_chest == 'Get Out of Jail Free':
                                 user.has_jail_card = True
 
                             elif drawn_chest == 'Advance to Go': #brings user to start (tile 0) and gives him $200
