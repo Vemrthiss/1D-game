@@ -5,6 +5,7 @@ import assets.board.Board as board
 # ----------------------------------APPLICATION STATE TO INITIALISE----------------------------------
 game_players = [] #current game players
 out_players = [] #list of out players, since it is ordered, also tracks who came in last, 2nd last etc
+num_players = 0 #indicates number of players, to be assigned a value at start of game code
 game_properties = [] #list of all 22 houses to be on the board
 game_board = board.init_board() # initalises a persisting BOARD STATE, to be taken reference whenever the board is to be printed
 game_chances = board.init_chances() #initialises a randomised chance deck
@@ -197,7 +198,7 @@ display_board()
 # --------------STARTS THE MAIN 'WHILE' LOOP---------------------
 for user in itertools.cycle(game_players): # infinitely cycle through the list
     end_turn = False
-    if len(out_players) == 3: # there are 3 players who are out, the game ends
+    if len(out_players) == num_players - 1: # there are (num_players - 1) players who are out (i.e. only 1 player left), the game ends
         break
 
     elif user.is_out:
