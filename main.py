@@ -6,7 +6,6 @@ import assets.board.Board as board
 game_players = [] #current game players
 out_players = [] #list of out players, since it is ordered, also tracks who came in last, 2nd last etc
 num_players = 0 #indicates number of players, to be assigned a value at start of game code
-game_properties = [] #list of all 22 houses to be on the board
 game_board = board.init_board() # initalises a persisting BOARD STATE, to be taken reference whenever the board is to be printed
 game_chances = board.init_chances() #initialises a randomised chance deck
 game_chests = board.init_chests() #initalises a randomised chest deck
