@@ -10,7 +10,6 @@ class Property(BoardTile):
 
     def __str__(self):
         #self.symbol to be declared in child classes
-        #return f'{self.name: <{self.max_tile_length}}\n{self.symbol: <{self.max_tile_length}}'
         user_tokens = [occupant.token for occupant in self.occupants]
         user_tokens_str = f"({', '.join(user_tokens)})"
         owner_token = f' [{self.owner.token}] ' if self.owner != 0 else ' '

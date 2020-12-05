@@ -274,12 +274,6 @@ for user in itertools.cycle(game_players): # infinitely cycle through the list
                     diceroll2 = random.randint(1, 6)
                     user_diceroll = diceroll1 + diceroll2
                     user.update_position(user_diceroll) #adds diceroll to previous position of user
-                    
-                    #------testing each tile's functionality-------
-                    #user.update_position(30) #testing go_jail functionality
-                    #user.update_position(4) #testing road tax
-                    #user.update_position(38) #testing income tax
-                    #-----end of testing-------------------------
 
                     update_display_board()
                     print(f'You rolled a {diceroll1} and a {diceroll2}, totalling to {user_diceroll}')
@@ -298,11 +292,7 @@ for user in itertools.cycle(game_players): # infinitely cycle through the list
                             
                             rental_due = landed_tile.rental
                             print(f'This {property_type} property "{property_name}" you landed on is already owned by Player {property_owner.player_no} or {property_owner.token}. You have to pay him/her rent of ${rental_due}!')
-                            #------------------CHECK--------------------------
-                            bankruptcy_check(user, property_owner, rental_due)
-                            # user.update_wallet(-rental_due) #user pays money
-                            # property_owner.update_wallet(rental_due) #owner receives money
-                            #print(f'You now have ${user.wallet} and Player {property_owner.player_no} has ${property_owner.wallet}') #to omit? what happens if user is removed after the check above?
+                            bankruptcy_check(user, property_owner, rental_due) #bankruptcy check
 
                         else: #if property is NOT owned, give choice to current user to buy it, (if not set up an auction)
                             purchase_options = ['Y', 'N']
